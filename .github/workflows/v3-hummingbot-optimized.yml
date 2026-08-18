@@ -6,6 +6,11 @@ on:
     paths:
       - 'v3_hummingbot_optimized_proxy.py'
       - '.github/workflows/v3-hummingbot-optimized.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'v3_hummingbot_optimized_proxy.py'
+      - '.github/workflows/v3-hummingbot-optimized.yml'
   workflow_dispatch:
 
 permissions:
