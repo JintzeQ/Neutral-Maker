@@ -1,0 +1,47 @@
+name: V3 Hummingbot-Style Maker Optimizer
+
+on:
+  push:
+    branches: [v2-paper-validation]
+    paths:
+      - 'v3_hummingbot_optimizer.py'
+      - 'v2_datavision_validation.py'
+      - 'v2_maker_proxy.py'
+      - '.github/workflows/v3-hummingbot-optimizer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  v3-optimizer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip numpy pandas
+
+      - name: Run V3 optimizer
+        run: |
+          python v3_hummingbot_optimizer.py \
+            --start-date 2026-08-12 \
+            --end-date 2026-08-17 \
+            --output-dir v3_out \
+            --bootstrap 3000
+
+      - name: Upload V3 results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-hummingbot-optimizer-2026-08-12-to-17
+          path: v3_out/
+          if-no-files-found: warn
+          retention-days: 14
