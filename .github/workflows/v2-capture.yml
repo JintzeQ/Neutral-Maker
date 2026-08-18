@@ -1,25 +1,25 @@
-name: V2 Binance Capture Test
+name: V2 Multi-Symbol DataVision Validation
 
 on:
   push:
     branches: [v2-paper-validation]
     paths:
       - '.github/workflows/v2-capture.yml'
-      - 'binance_v2_capture.py'
+      - 'v2_datavision_validation.py'
   pull_request:
     branches: [main]
     paths:
       - '.github/workflows/v2-capture.yml'
-      - 'binance_v2_capture.py'
+      - 'v2_datavision_validation.py'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  capture:
+  validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,62 +30,15 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: python -m pip install --upgrade pip websockets
+        run: python -m pip install --upgrade pip numpy pandas
 
-      - name: Diagnose Binance endpoints
-        shell: bash
-        run: |
-          set +e
-          echo '=== fapi ping ==='
-          curl -sS -D /tmp/h1 -o /tmp/b1 -w 'HTTP=%{http_code}\n' https://fapi.binance.com/fapi/v1/ping
-          cat /tmp/h1
-          head -c 500 /tmp/b1; echo
-          echo '=== fapi exchangeInfo ==='
-          curl -sS -D /tmp/h2 -o /tmp/b2 -w 'HTTP=%{http_code}\n' https://fapi.binance.com/fapi/v1/exchangeInfo
-          cat /tmp/h2
-          head -c 500 /tmp/b2; echo
-          echo '=== data vision aggTrades prior day ==='
-          curl -sSIL -w 'HTTP=%{http_code}\n' https://data.binance.vision/data/futures/um/daily/aggTrades/DOGEUSDC/DOGEUSDC-aggTrades-2026-08-17.zip | tail -n 20
-          echo '=== data vision bookDepth prior day ==='
-          curl -sSIL -w 'HTTP=%{http_code}\n' https://data.binance.vision/data/futures/um/daily/bookDepth/DOGEUSDC/DOGEUSDC-bookDepth-2026-08-17.zip | tail -n 20
-          echo '=== data vision bookTicker prior day ==='
-          curl -sSIL -w 'HTTP=%{http_code}\n' https://data.binance.vision/data/futures/um/daily/bookTicker/DOGEUSDC/DOGEUSDC-bookTicker-2026-08-17.zip | tail -n 20
+      - name: Validate V2 lead signal on all matched USDC markets
+        run: python v2_datavision_validation.py --date 2026-08-17 --output-dir v2_validation_out --bootstrap 3000
 
-      - name: Capture Binance public market data
-        run: python binance_v2_capture.py --minutes 1 --output v2_market_capture.jsonl.gz
-
-      - name: Validate capture
-        if: success()
-        run: |
-          python - <<'PY'
-          import gzip, json, pathlib
-          p = pathlib.Path('v2_market_capture.jsonl.gz')
-          if not p.exists() or p.stat().st_size == 0:
-              raise SystemExit('capture file missing or empty')
-          events = 0
-          meta = None
-          with gzip.open(p, 'rt', encoding='utf-8') as f:
-              for line in f:
-                  obj = json.loads(line)
-                  if obj.get('kind') == 'META':
-                      meta = obj
-                  elif obj.get('kind') == 'EVENT':
-                      events += 1
-          pairs = len((meta or {}).get('specs', []))
-          summary = f'pairs={pairs}\nevents={events}\nbytes={p.stat().st_size}\n'
-          pathlib.Path('capture_summary.txt').write_text(summary, encoding='utf-8')
-          print(summary)
-          if pairs < 1 or events < 100:
-              raise SystemExit('insufficient Binance data captured')
-          PY
-
-      - name: Upload capture artifact
-        if: success()
+      - name: Upload validation result
         uses: actions/upload-artifact@v4
         with:
-          name: v2-binance-capture-test
-          path: |
-            v2_market_capture.jsonl.gz
-            capture_summary.txt
+          name: v2-datavision-validation-2026-08-17
+          path: v2_validation_out/
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 14
