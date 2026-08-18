@@ -1,0 +1,45 @@
+name: V4 Fill-Conditioned Market Maker
+
+on:
+  push:
+    branches: [v2-paper-validation]
+    paths:
+      - 'v4_fill_conditioned_mm.py'
+      - '.github/workflows/v4-fill-conditioned.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'v4_fill_conditioned_mm.py'
+      - '.github/workflows/v4-fill-conditioned.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip numpy pandas scikit-learn
+      - name: Syntax check
+        run: python -m py_compile v4_fill_conditioned_mm.py
+      - name: Run V4 train-validation-OOS
+        run: |
+          python v4_fill_conditioned_mm.py \
+            --start-date 2026-08-13 \
+            --end-date 2026-08-17 \
+            --output-dir v4_fill_cond_out
+      - name: Upload V4 results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v4-fill-conditioned-2026-08-13-to-17
+          path: v4_fill_cond_out/
+          if-no-files-found: warn
+          retention-days: 14
