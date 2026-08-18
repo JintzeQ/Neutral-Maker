@@ -1,0 +1,29 @@
+name: V2 Live All-Market Scan
+
+on:
+  push:
+    branches: [v2-paper-validation]
+    paths:
+      - 'v2_live_market_scan.py'
+      - '.github/workflows/v2-live-market-scan.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run V2 live scan
+        run: python v2_live_market_scan.py
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2-live-scan
+          path: v2_live_scan.json
+          if-no-files-found: warn
+          retention-days: 2
