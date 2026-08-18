@@ -6,7 +6,7 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -14,8 +14,8 @@ jobs:
           python-version: '3.11'
       - name: Install capture dependencies
         run: python -m pip install websockets
-      - name: Capture live BBO and trades
-        run: python v6_bbo_capture.py --seconds 600 --output v8_live_bbo_trade.jsonl.gz
+      - name: Capture 50 minutes live BBO and trades
+        run: python v6_bbo_capture.py --seconds 3000 --output v8_live_bbo_trade.jsonl.gz
       - name: Run V8 adverse-selection-aware replay
         run: python v8_vip_efficient_mm.py v8_live_bbo_trade.jsonl.gz --out v8_vip_efficient_summary.json
       - uses: actions/upload-artifact@v4
