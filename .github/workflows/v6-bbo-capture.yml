@@ -6,6 +6,11 @@ on:
     paths:
       - 'v6_bbo_capture.py'
       - '.github/workflows/v6-bbo-capture.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'v6_bbo_capture.py'
+      - '.github/workflows/v6-bbo-capture.yml'
   workflow_dispatch:
 
 permissions:
