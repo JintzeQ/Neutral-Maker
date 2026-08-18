@@ -51,3 +51,5 @@ jobs:
           path: v3_hb_optimized_out/
           if-no-files-found: warn
           retention-days: 14
+
+# validation run requested 2026-08-18
