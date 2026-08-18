@@ -1,0 +1,65 @@
+name: V2 Binance Capture Test
+
+on:
+  push:
+    branches: [v2-paper-validation]
+    paths:
+      - '.github/workflows/v2-capture.yml'
+      - 'binance_v2_capture.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip websockets
+
+      - name: Capture Binance public market data
+        run: python binance_v2_capture.py --minutes 2 --output v2_market_capture.jsonl.gz
+
+      - name: Validate capture
+        run: |
+          python - <<'PY'
+          import gzip, json, pathlib
+          p = pathlib.Path('v2_market_capture.jsonl.gz')
+          if not p.exists() or p.stat().st_size == 0:
+              raise SystemExit('capture file missing or empty')
+          events = 0
+          meta = None
+          with gzip.open(p, 'rt', encoding='utf-8') as f:
+              for line in f:
+                  obj = json.loads(line)
+                  if obj.get('kind') == 'META':
+                      meta = obj
+                  elif obj.get('kind') == 'EVENT':
+                      events += 1
+          pairs = len((meta or {}).get('specs', []))
+          summary = f'pairs={pairs}\nevents={events}\nbytes={p.stat().st_size}\n'
+          pathlib.Path('capture_summary.txt').write_text(summary, encoding='utf-8')
+          print(summary)
+          if pairs < 1 or events < 100:
+              raise SystemExit('insufficient Binance data captured')
+          PY
+
+      - name: Upload capture artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2-binance-capture-test
+          path: |
+            v2_market_capture.jsonl.gz
+            capture_summary.txt
+          if-no-files-found: error
+          retention-days: 7
