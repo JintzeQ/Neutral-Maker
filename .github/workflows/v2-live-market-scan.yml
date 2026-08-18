@@ -6,6 +6,11 @@ on:
     paths:
       - 'v2_live_market_scan.py'
       - '.github/workflows/v2-live-market-scan.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'v2_live_market_scan.py'
+      - '.github/workflows/v2-live-market-scan.yml'
   workflow_dispatch:
 
 permissions:
