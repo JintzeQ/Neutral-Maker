@@ -8,6 +8,13 @@ on:
       - 'v2_datavision_validation.py'
       - 'v2_maker_proxy.py'
       - '.github/workflows/v3-hummingbot-optimizer.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'v3_hummingbot_optimizer.py'
+      - 'v2_datavision_validation.py'
+      - 'v2_maker_proxy.py'
+      - '.github/workflows/v3-hummingbot-optimizer.yml'
   workflow_dispatch:
 
 permissions:
@@ -28,6 +35,9 @@ jobs:
 
       - name: Install dependencies
         run: python -m pip install --upgrade pip numpy pandas
+
+      - name: Syntax check
+        run: python -m py_compile v3_hummingbot_optimizer.py
 
       - name: Run V3 optimizer
         run: |
