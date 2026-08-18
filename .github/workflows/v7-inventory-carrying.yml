@@ -15,7 +15,7 @@ jobs:
       - name: Install capture dependencies
         run: python -m pip install websockets
       - name: Capture live BBO and trades
-        run: python v6_bbo_capture.py --minutes 10 --out v7_live_bbo_trade.jsonl.gz
+        run: python v6_bbo_capture.py --seconds 600 --output v7_live_bbo_trade.jsonl.gz
       - name: Run inventory-carrying replay
         run: python v7_inventory_carrying_mm.py v7_live_bbo_trade.jsonl.gz --out v7_inventory_carrying_summary.json
       - uses: actions/upload-artifact@v4
