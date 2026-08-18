@@ -1,0 +1,39 @@
+name: V6 Direct BBO Capture Test
+
+on:
+  push:
+    branches: [v2-paper-validation]
+    paths:
+      - 'v6_bbo_capture.py'
+      - '.github/workflows/v6-bbo-capture.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependency
+        run: python -m pip install --upgrade websockets
+      - name: Syntax check
+        run: python -m py_compile v6_bbo_capture.py
+      - name: Capture Binance Futures BBO + trades
+        run: |
+          python v6_bbo_capture.py \
+            --seconds 90 \
+            --output v6_bbo_capture.jsonl.gz
+      - name: Upload capture
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v6-bbo-capture-test
+          path: v6_bbo_capture.jsonl.gz
+          if-no-files-found: warn
+          retention-days: 7
