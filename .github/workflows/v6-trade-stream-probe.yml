@@ -1,0 +1,29 @@
+name: V6 Trade Stream Probe
+
+on:
+  push:
+    branches: [v2-paper-validation]
+    paths:
+      - 'v6_trade_stream_probe.py'
+      - '.github/workflows/v6-trade-stream-probe.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'v6_trade_stream_probe.py'
+      - '.github/workflows/v6-trade-stream-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --upgrade websockets
+      - run: python v6_trade_stream_probe.py

@@ -1,0 +1,44 @@
+name: V2 Multi-Symbol DataVision Validation
+
+on:
+  push:
+    branches: [v2-paper-validation]
+    paths:
+      - '.github/workflows/v2-capture.yml'
+      - 'v2_datavision_validation.py'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/v2-capture.yml'
+      - 'v2_datavision_validation.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip numpy pandas
+
+      - name: Validate V2 lead signal on all matched USDC markets
+        run: python v2_datavision_validation.py --date 2026-08-17 --output-dir v2_validation_out --bootstrap 3000
+
+      - name: Upload validation result
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2-datavision-validation-2026-08-17
+          path: v2_validation_out/
+          if-no-files-found: error
+          retention-days: 14

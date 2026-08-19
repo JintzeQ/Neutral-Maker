@@ -1,0 +1,54 @@
+name: V2 Conservative Maker Proxy
+
+on:
+  push:
+    branches: [v2-paper-validation]
+    paths:
+      - 'v2_maker_proxy.py'
+      - 'v2_maker_proxy_corrected.py'
+      - 'v2_datavision_validation.py'
+      - '.github/workflows/v2-maker-proxy.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'v2_maker_proxy.py'
+      - 'v2_maker_proxy_corrected.py'
+      - 'v2_datavision_validation.py'
+      - '.github/workflows/v2-maker-proxy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  maker-proxy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip numpy pandas
+
+      - name: Run corrected 72h multi-symbol maker proxy
+        run: |
+          python v2_maker_proxy_corrected.py \
+            --start-date 2026-08-15 \
+            --end-date 2026-08-17 \
+            --output-dir v2_maker_proxy_out \
+            --bootstrap 3000
+
+      - name: Upload maker proxy results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2-maker-proxy-corrected-2026-08-15-to-17
+          path: v2_maker_proxy_out/
+          if-no-files-found: warn
+          retention-days: 14
